@@ -8,16 +8,28 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BorderBeam } from '@/components/ui/border-beam';
 
+interface CarImage {
+  url: string;
+  publicId: string;
+  isPrimary: boolean;
+  order: number;
+}
+
 interface Car {
-  id: string;
+  _id?: string;
+  id?: string;
   title: string;
   price: number;
-  km: number;
-  fuel: string;
+  kmDriven?: number;
+  km?: number;
+  fuelType?: string;
+  fuel?: string;
   transmission: string;
-  image: string;
+  images?: CarImage[];
+  image?: string;
   isFeatured: boolean;
   status: string;
+  make?: string;
   brand?: string;
   year?: number;
 }
@@ -26,10 +38,21 @@ export default function CarCard({ car, index = 0 }: { car: Car; index?: number }
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: '-50px' });
 
+  // Support both real API (MongoDB) and placeholder data
+  const carId       = car._id || car.id || '';
+  const km          = car.kmDriven ?? car.km ?? 0;
+  const fuel        = car.fuelType || car.fuel || '';
+  const primaryImg  = car.images?.find((img) => img.isPrimary)?.url
+                   || car.images?.[0]?.url
+                   || car.image
+                   || 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=600&q=80';
+
   const statusConfig: Record<string, { label: string; class: string }> = {
-    available: { label: '● Available', class: 'bg-green-500/20 text-green-400 border-green-500/30' },
-    reserved:  { label: '● Reserved',  class: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
-    sold:      { label: '● Sold',      class: 'bg-red-500/20 text-red-400 border-red-500/30' },
+    available:   { label: '● Available',   class: 'bg-green-500/20 text-green-400 border-green-500/30' },
+    reserved:    { label: '● Reserved',    class: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
+    sold:        { label: '● Sold',        class: 'bg-red-500/20 text-red-400 border-red-500/30' },
+    maintenance: { label: '● Maintenance', class: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
+    pending:     { label: '● Pending',     class: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
   };
 
   const status = statusConfig[car.status] || statusConfig.available;
@@ -47,14 +70,17 @@ export default function CarCard({ car, index = 0 }: { car: Car; index?: number }
       {/* Image */}
       <div className="relative h-48 overflow-hidden bg-muted">
         <img
-          src={car.image}
+          src={primaryImg}
           alt={car.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
 
         {/* Status badge */}
         <div className="absolute top-3 left-3">
-          <Badge variant="outline" className={`text-xs font-medium backdrop-blur-sm ${status.class}`}>
+          <Badge
+            variant="outline"
+            className={`text-xs font-medium backdrop-blur-sm ${status.class}`}
+          >
             {status.label}
           </Badge>
         </div>
@@ -94,16 +120,16 @@ export default function CarCard({ car, index = 0 }: { car: Car; index?: number }
         <div className="flex items-center gap-3 text-muted-foreground text-xs mb-4 flex-wrap">
           <div className="flex items-center gap-1">
             <Gauge className="w-3.5 h-3.5" />
-            {car.km.toLocaleString()} km
+            {km.toLocaleString()} km
           </div>
           <div className="flex items-center gap-1">
             <Fuel className="w-3.5 h-3.5" />
-            {car.fuel}
+            {fuel}
           </div>
           <div className="text-muted-foreground/60">{car.transmission}</div>
         </div>
 
-        <Link href={`/cars/${car.id}`}>
+        <Link href={`/cars/${carId}`}>
           <Button
             disabled={car.status === 'sold'}
             className="w-full h-9 bg-accent hover:bg-red-600 text-foreground hover:text-white border border-border hover:border-red-600 transition-all duration-300 text-sm font-medium rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"

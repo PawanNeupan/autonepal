@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useAuthStore } from '@/store/authStore';
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: '',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -44,7 +44,9 @@ api.interceptors.response.use(
         return api(original);
       } catch {
         useAuthStore.getState().logout();
-        window.location.href = '/login';
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
       }
     }
 
