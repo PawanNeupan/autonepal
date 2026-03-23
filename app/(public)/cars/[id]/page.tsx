@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/authStore';
 import { useCar } from '@/hooks/useCars';
+import { useToggleFavorite } from '@/hooks/useFavorites';
 
 export default function CarDetailPage() {
   const { id } = useParams();
@@ -23,21 +24,27 @@ export default function CarDetailPage() {
   const { isAuthenticated } = useAuthStore();
   const [currentImage, setCurrentImage] = useState(0);
   const [isFavorited, setIsFavorited] = useState(false);
+  const { mutateAsync: toggleFavorite } = useToggleFavorite();
 
   const { data: car, isLoading, isError } = useCar(id as string);
 
   const nextImage = () => setCurrentImage((prev) => (prev + 1) % (car?.images?.length || 1));
   const prevImage = () => setCurrentImage((prev) => (prev - 1 + (car?.images?.length || 1)) % (car?.images?.length || 1));
 
-  const handleFavorite = () => {
-    if (!isAuthenticated) {
-      toast.error('Please login to save favorites');
-      router.push('/login');
-      return;
-    }
-    setIsFavorited(!isFavorited);
-    toast.success(isFavorited ? 'Removed from favorites' : 'Added to favorites');
-  };
+  const handleFavorite = async () => {
+  if (!isAuthenticated) {
+    toast.error('Please login to save favorites');
+    router.push('/login');
+    return;
+  }
+  try {
+    const res = await toggleFavorite(car._id);
+    setIsFavorited(res.favorited);
+    toast.success(res.favorited ? 'Added to favorites' : 'Removed from favorites');
+  } catch {
+    toast.error('Failed to update favorites');
+  }
+};
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);

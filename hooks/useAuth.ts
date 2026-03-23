@@ -7,7 +7,7 @@ export const useAuth = () => {
   const router = useRouter();
 
   const login = async (email: string, password: string) => {
-    const res = await api.post('/auth/login', { email, password });
+    const res = await api.post('/api/auth/login', { email, password });
     setUser(res.data.user, res.data.accessToken);
     return res.data;
   };

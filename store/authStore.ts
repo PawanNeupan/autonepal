@@ -15,9 +15,10 @@ interface AuthStore {
   user: IUser | null;
   accessToken: string | null;
   isAuthenticated: boolean;
-  setUser: (user: IUser, accessToken: string) => void;
+  setUser: (user: IUser, accessToken?: string) => void;
   updateUser: (user: Partial<IUser>) => void;
   setAccessToken: (token: string) => void;
+  clearAuth: () => void;
   logout: () => void;
 }
 
@@ -28,8 +29,14 @@ export const useAuthStore = create<AuthStore>()(
       accessToken: null,
       isAuthenticated: false,
 
+      // accepts optional accessToken so both
+      // setUser(user, token) and setUser(user) work
       setUser: (user, accessToken) =>
-        set({ user, accessToken, isAuthenticated: true }),
+        set((state) => ({
+          user,
+          isAuthenticated: true,
+          accessToken: accessToken ?? state.accessToken,
+        })),
 
       updateUser: (updatedUser) =>
         set((state) => ({
@@ -38,14 +45,17 @@ export const useAuthStore = create<AuthStore>()(
 
       setAccessToken: (token) => set({ accessToken: token }),
 
+      clearAuth: () =>
+        set({ user: null, accessToken: null, isAuthenticated: false }),
+
       logout: () =>
         set({ user: null, accessToken: null, isAuthenticated: false }),
     }),
     {
       name: 'auth-storage',
       partialize: (state) => ({
-        user: state.user,
-        accessToken: state.accessToken,
+        user:            state.user,
+        accessToken:     state.accessToken,
         isAuthenticated: state.isAuthenticated,
       }),
     }
