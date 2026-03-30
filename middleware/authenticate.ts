@@ -8,50 +8,34 @@ export async function authenticate(req: NextRequest) {
     await connectDB();
 
     const authHeader = req.headers.get('authorization');
-    const token = authHeader?.split(' ')[1];
+    const token      = authHeader?.split(' ')[1];
 
     if (!token) {
-      return {
-        error: NextResponse.json(
-          { message: 'Not authenticated' },
-          { status: 401 }
-        ),
-        user: null,
-      };
+      return { error: 'Not authenticated', user: null };
     }
 
     const decoded = verifyAccessToken(token) as { id: string; role: string };
 
-    const user = await User.findById(decoded.id).select('-password -refreshToken');
+    const userDoc = await User.findById(decoded.id).select('-password -refreshToken');
 
-    if (!user) {
-      return {
-        error: NextResponse.json(
-          { message: 'User not found' },
-          { status: 401 }
-        ),
-        user: null,
-      };
+    if (!userDoc) {
+      return { error: 'User not found', user: null };
     }
 
-    if (user.isBanned) {
-      return {
-        error: NextResponse.json(
-          { message: 'Your account has been banned' },
-          { status: 403 }
-        ),
-        user: null,
-      };
+    if (userDoc.isBanned) {
+      return { error: 'Your account has been banned', user: null };
     }
+
+    // Always expose userId so all API routes work consistently
+    const user = {
+      ...userDoc.toObject(),
+      userId: userDoc._id.toString(),
+      _id:    userDoc._id.toString(),
+      role:   userDoc.role,
+    };
 
     return { error: null, user };
   } catch {
-    return {
-      error: NextResponse.json(
-        { message: 'Invalid token' },
-        { status: 401 }
-      ),
-      user: null,
-    };
+    return { error: 'Invalid token', user: null };
   }
 }

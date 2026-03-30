@@ -22,6 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import NotificationDropdown from './NotificationDropdown';
 
 const NAV_LINKS = [
   { label: 'Home',    href: '/' },
@@ -163,16 +164,9 @@ export default function Navbar() {
                     </motion.div>
                   </Link>
 
-                  <Link href="/notifications">
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="hidden sm:flex w-9 h-9 rounded-lg items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors relative"
-                    >
-                      <Bell className="w-4 h-4" />
-                      <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-                    </motion.div>
-                  </Link>
+                  <div className="hidden sm:block">
+  <NotificationDropdown />
+</div>
 
                   {/* User dropdown — desktop */}
                   <DropdownMenu modal={false}>

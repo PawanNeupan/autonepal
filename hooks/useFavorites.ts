@@ -1,13 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/axios';
+import { useAuthStore } from '@/store/authStore';
 
 export function useFavorites() {
+  const { isAuthenticated } = useAuthStore();
   return useQuery({
     queryKey: ['favorites'],
     queryFn: async () => {
       const { data } = await api.get('/api/favorites');
       return data;
     },
+    enabled: isAuthenticated, // ← only fetch when logged in
+    retry: false,
   });
 }
 
@@ -19,5 +23,8 @@ export function useToggleFavorite() {
       return data;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['favorites'] }),
+    onError: (error: any) => {
+      console.error('Toggle favorite error:', error?.response?.data);
+    },
   });
 }

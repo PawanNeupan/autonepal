@@ -51,7 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <Navbar />
           {children}
-          <Footer />
+          
           <Toaster richColors position="top-right" />
         </Providers>
       </body>

@@ -1,5 +1,5 @@
-import { authenticate } from './authenticate';
 import { NextRequest, NextResponse } from 'next/server';
+import { authenticate } from './authenticate';
 
 export async function requireAdmin(req: NextRequest) {
   const { error, user } = await authenticate(req);
@@ -7,13 +7,7 @@ export async function requireAdmin(req: NextRequest) {
   if (error) return { error, user: null };
 
   if (user?.role !== 'admin') {
-    return {
-      error: NextResponse.json(
-        { message: 'Admin access required' },
-        { status: 403 }
-      ),
-      user: null,
-    };
+    return { error: 'Admin access required', user: null };
   }
 
   return { error: null, user };

@@ -1,12 +1,16 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { motion, useInView } from 'framer-motion';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Heart, Fuel, Gauge } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BorderBeam } from '@/components/ui/border-beam';
+import { useToggleFavorite, useFavorites } from '@/hooks/useFavorites';
+import { useAuthStore } from '@/store/authStore';
+import { toast } from 'sonner';
 
 interface CarImage {
   url: string;
@@ -35,17 +39,27 @@ interface Car {
 }
 
 export default function CarCard({ car, index = 0 }: { car: Car; index?: number }) {
-  const ref = useRef(null);
+  const ref    = useRef(null);
   const inView = useInView(ref, { once: true, margin: '-50px' });
+  const router = useRouter();
+
+  const { isAuthenticated }                         = useAuthStore();
+  const { data: favData }                           = useFavorites();
+  const { mutateAsync: toggleFavorite, isPending }  = useToggleFavorite();
 
   // Support both real API (MongoDB) and placeholder data
-  const carId       = car._id || car.id || '';
-  const km          = car.kmDriven ?? car.km ?? 0;
-  const fuel        = car.fuelType || car.fuel || '';
-  const primaryImg  = car.images?.find((img) => img.isPrimary)?.url
-                   || car.images?.[0]?.url
-                   || car.image
-                   || 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=600&q=80';
+  const carId      = car._id || car.id || '';
+  const km         = car.kmDriven ?? car.km ?? 0;
+  const fuel       = car.fuelType || car.fuel || '';
+  const primaryImg = car.images?.find((img) => img.isPrimary)?.url
+                  || car.images?.[0]?.url
+                  || car.image
+                  || 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=600&q=80';
+
+  // Check if this car is already favorited
+  const isFavorited = favData?.favorites?.some(
+    (fav: any) => fav.car?._id === carId || fav.car === carId
+  ) || false;
 
   const statusConfig: Record<string, { label: string; class: string }> = {
     available:   { label: '● Available',   class: 'bg-green-500/20 text-green-400 border-green-500/30' },
@@ -56,6 +70,26 @@ export default function CarCard({ car, index = 0 }: { car: Car; index?: number }
   };
 
   const status = statusConfig[car.status] || statusConfig.available;
+
+  const handleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!isAuthenticated) {
+      toast.error('Please login to save favorites');
+      router.push('/login');
+      return;
+    }
+
+    if (!carId) return;
+
+    try {
+      const res = await toggleFavorite(carId);
+      toast.success(res.favorited ? 'Added to favorites' : 'Removed from favorites');
+    } catch {
+      toast.error('Failed to update favorites');
+    }
+  };
 
   return (
     <motion.div
@@ -95,9 +129,18 @@ export default function CarCard({ car, index = 0 }: { car: Car; index?: number }
         )}
 
         {/* Favorite button */}
-        <button className="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white/60 hover:text-red-500 hover:bg-black/70 transition-all">
-          <Heart className="w-4 h-4" />
-        </button>
+        <motion.button
+          whileTap={{ scale: 0.85 }}
+          onClick={handleFavorite}
+          disabled={isPending}
+          className={`absolute bottom-3 right-3 w-8 h-8 rounded-full backdrop-blur-sm flex items-center justify-center transition-all ${
+            isFavorited
+              ? 'bg-red-600/80 text-white'
+              : 'bg-black/50 text-white/60 hover:text-red-500 hover:bg-black/70'
+          }`}
+        >
+          <Heart className={`w-4 h-4 ${isFavorited ? 'fill-white' : ''}`} />
+        </motion.button>
 
         {/* Sold overlay */}
         {car.status === 'sold' && (
