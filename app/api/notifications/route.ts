@@ -10,16 +10,21 @@ export async function GET(req: NextRequest) {
 
   try {
     await connectDB();
-    const query: any = user.role === 'admin' ? {} : { user: user.userId };
+    const userId = user.userId || user._id;
+    const query: any = user.role === 'admin' ? {} : { user: userId };
 
     const notifications = await Notification.find(query)
       .sort({ createdAt: -1 })
       .limit(50);
 
-    const unreadCount = await Notification.countDocuments({ ...query, isRead: false });
+    const unreadCount = await Notification.countDocuments({
+      ...query,
+      isRead: false,
+    });
 
     return NextResponse.json({ notifications, unreadCount });
-  } catch (error) {
+  } catch (err) {
+    console.error('GET /api/notifications error:', err);
     return NextResponse.json({ message: 'Server error' }, { status: 500 });
   }
 }
@@ -31,6 +36,8 @@ export async function POST(req: NextRequest) {
   try {
     await connectDB();
     const { userId, title, message, type } = await req.json();
+
+    console.log('Sending notification:', { userId, title, message, type });
 
     if (!title || !message) {
       return NextResponse.json({ message: 'Title and message required' }, { status: 400 });
@@ -45,7 +52,8 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ message: 'Notification sent', notification }, { status: 201 });
-  } catch (error) {
+  } catch (err) {
+    console.error('POST /api/notifications error:', err);
     return NextResponse.json({ message: 'Server error' }, { status: 500 });
   }
 }
@@ -56,13 +64,16 @@ export async function PUT(req: NextRequest) {
 
   try {
     await connectDB();
-    // Mark all as read for this user
+    const userId = user.userId || user._id;
+
     await Notification.updateMany(
-      { user: user.userId, isRead: false },
+      { user: userId, isRead: false },
       { isRead: true }
     );
+
     return NextResponse.json({ message: 'All marked as read' });
-  } catch (error) {
+  } catch (err) {
+    console.error('PUT /api/notifications error:', err);
     return NextResponse.json({ message: 'Server error' }, { status: 500 });
   }
 }
