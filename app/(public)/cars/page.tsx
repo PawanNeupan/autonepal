@@ -39,7 +39,7 @@ const DEFAULT_FILTERS: Filters = {
   brand:        '',
   fuel:         '',
   transmission: '',
-  priceRange:   [0, 900000000],
+  priceRange:   [0, 90000000],
   sort:         'newest',
 };
 
@@ -121,7 +121,7 @@ function FilterPanel({ filters, setFilters, onReset }: {
         </div>
         <Slider
           min={0}
-          max={20000000}
+          max={90000000}
           step={500000}
           value={filters.priceRange}
           onValueChange={(val) => setFilters({ ...filters, priceRange: val as [number, number] })}
@@ -170,7 +170,7 @@ export default function CarsPage() {
     filters.brand,
     filters.fuel,
     filters.transmission,
-    filters.priceRange[0] > 0 || filters.priceRange[1] < 20000000 ? 'price' : '',
+    filters.priceRange[0] > 0 || filters.priceRange[1] < 90000000 ? 'price' : '',
   ].filter(Boolean).length;
 
   const resetFilters = () => setFilters({ ...DEFAULT_FILTERS, search: filters.search });

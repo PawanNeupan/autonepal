@@ -1,12 +1,34 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { Car, Phone, Mail, MapPin, Clock } from 'lucide-react';
+import { Car, Phone, Mail, MapPin, Clock, Star } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 import { useContactInfo } from '@/hooks/useContactInfo';
 
 export default function Footer() {
   const { data } = useContactInfo();
   const contact  = data?.contact;
+
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [review, setReview] = useState('');
+
+  const handleReviewSubmit = () => {
+    if (rating === 0) {
+      toast.error('Please select a rating');
+      return;
+    }
+    // Handle submission logic here (e.g., API call)
+    toast.success('Thank you for your review!');
+    setIsReviewOpen(false);
+    setRating(0);
+    setReview('');
+  };
 
   const phone   = contact?.phone        || '+977 01-XXXXXXX';
   const email   = contact?.email        || 'info@autonepal.com';
@@ -114,6 +136,14 @@ export default function Footer() {
                   </Link>
                 </li>
               ))}
+              <li>
+                <button
+                  onClick={() => setIsReviewOpen(true)}
+                  className="text-sm text-muted-foreground hover:text-red-500 transition-colors"
+                >
+                  Write a Review
+                </button>
+              </li>
             </ul>
           </div>
 
@@ -202,6 +232,82 @@ export default function Footer() {
         </div>
 
       </div>
+
+      {/* Review Dialog */}
+      <Dialog open={isReviewOpen} onOpenChange={setIsReviewOpen}>
+        <DialogContent className="sm:max-w-[320px] p-0 overflow-hidden border-none shadow-2xl">
+          <div className="bg-gradient-to-b from-red-500/10 to-transparent p-5 pb-2">
+            <DialogHeader className="space-y-2 text-center sm:text-center">
+              <div className="mx-auto w-10 h-10 bg-red-100 dark:bg-red-500/20 rounded-full flex items-center justify-center mb-1">
+                <Star className="w-5 h-5 text-red-600 dark:text-red-500 fill-red-600 dark:fill-red-500" />
+              </div>
+              <DialogTitle className="text-lg font-bold tracking-tight">Rate Your Experience</DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground">
+                We value your feedback. Let us know how we did!
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          
+          <div className="p-5 pt-2 grid gap-5">
+            <div className="space-y-3">
+              <label className="text-xs font-medium text-foreground block text-center">
+                How would you rate our service?
+              </label>
+              <div className="flex justify-center gap-1.5">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    className={`p-1.5 rounded-full transition-all duration-200 transform hover:scale-110 active:scale-95 ${
+                      star <= (hoverRating || rating) 
+                        ? 'text-yellow-400 bg-yellow-400/10' 
+                        : 'text-muted-foreground/20 hover:bg-muted'
+                    }`}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    onClick={() => setRating(star)}
+                  >
+                    <Star className={`w-6 h-6 ${star <= (hoverRating || rating) ? 'fill-current drop-shadow-sm' : ''}`} />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="review" className="text-xs font-medium text-foreground">
+                Share your thoughts (optional)
+              </label>
+              <Textarea
+                id="review"
+                placeholder="What did you like or dislike?"
+                value={review}
+                onChange={(e) => setReview(e.target.value)}
+                className="min-h-[80px] text-sm resize-none focus-visible:ring-red-500 bg-muted/50"
+              />
+            </div>
+          </div>
+          
+          <div className="p-5 pt-0 border-t bg-muted/20">
+            <DialogFooter className="sm:justify-between flex-row items-center pt-3 gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setIsReviewOpen(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Cancel
+              </Button>
+              <Button 
+                size="sm"
+                onClick={handleReviewSubmit} 
+                className="bg-red-600 hover:bg-red-700 text-white shadow-sm shadow-red-600/20 px-6"
+              >
+                Submit
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
     </footer>
   );
 }
