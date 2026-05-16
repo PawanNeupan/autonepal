@@ -18,7 +18,7 @@ const UserSchema = new Schema<IUser>(
   {
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true },
-    phone: { type: String, required: true },
+    phone: { type: String, default: '' },
     password: { type: String, required: true, minlength: 6 },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     avatar: {
@@ -43,6 +43,10 @@ UserSchema.methods.comparePassword = async function (
   return bcrypt.compare(password, this.password);
 };
 
-const User = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
+if (mongoose.models.User) {
+  delete mongoose.models.User;
+}
+
+const User = mongoose.model<IUser>('User', UserSchema);
 
 export default User;

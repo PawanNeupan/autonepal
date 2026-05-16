@@ -30,15 +30,32 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { error, user } = await authenticate(req);
-  if (error) return NextResponse.json({ message: error }, { status: 401 });
-
   try {
     await connectDB();
-    const { carId, rating, comment } = await req.json();
+    const body = await req.json();
+    const { carId, rating, comment, name } = body;
 
-    if (!carId || !rating) {
-      return NextResponse.json({ message: 'Car and rating are required' }, { status: 400 });
+    if (!rating) {
+      return NextResponse.json({ message: 'Rating is required' }, { status: 400 });
+    }
+
+    // Attempt to authenticate, but don't fail immediately if it's a site review
+    const { error, user } = await authenticate(req);
+
+    // Site review (no carId)
+    if (!carId) {
+      const review = await Review.create({
+        user: user?.userId || undefined,
+        name: name || user?.name || 'Anonymous',
+        rating,
+        comment: comment || '',
+      });
+      return NextResponse.json({ message: 'Review submitted', review }, { status: 201 });
+    }
+
+    // Car review (Requires auth)
+    if (error || !user) {
+      return NextResponse.json({ message: 'You must be logged in to review a car' }, { status: 401 });
     }
 
     const existing = await Review.findOne({ user: user.userId, car: carId });
@@ -48,13 +65,15 @@ export async function POST(req: NextRequest) {
 
     const review = await Review.create({
       user:    user.userId,
+      name:    user.name,
       car:     carId,
       rating,
       comment: comment || '',
     });
 
     return NextResponse.json({ message: 'Review submitted', review }, { status: 201 });
-  } catch (error) {
-    return NextResponse.json({ message: 'Server error' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Review submission error:', error);
+    return NextResponse.json({ message: error?.message || 'Server error' }, { status: 500 });
   }
 }

@@ -10,21 +10,25 @@ export interface INegotiationMessage {
 }
 
 export interface INegotiation {
-  sellRequest: mongoose.Types.ObjectId;
+  car: mongoose.Types.ObjectId;
   user: mongoose.Types.ObjectId;
+  offeredPrice: number;
+  message: string;
   messages: INegotiationMessage[];
-  status: 'active' | 'agreed' | 'rejected' | 'expired';
+  status: 'pending' | 'active' | 'agreed' | 'rejected' | 'expired';
   finalPrice: number;
 }
 
 const NegotiationSchema = new Schema<INegotiation>(
   {
-    sellRequest: {
+    car: {
       type: Schema.Types.ObjectId,
-      ref: 'SellRequest',
+      ref: 'Car',
       required: true,
     },
     user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    offeredPrice: { type: Number, required: true },
+    message: { type: String, default: '' },
     messages: [
       {
         sender: { type: Schema.Types.ObjectId, ref: 'User' },
@@ -37,16 +41,18 @@ const NegotiationSchema = new Schema<INegotiation>(
     ],
     status: {
       type: String,
-      enum: ['active', 'agreed', 'rejected', 'expired'],
-      default: 'active',
+      enum: ['pending', 'active', 'agreed', 'rejected', 'expired'],
+      default: 'pending',
     },
     finalPrice: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
 
-const Negotiation =
-  mongoose.models.Negotiation ||
-  mongoose.model<INegotiation>('Negotiation', NegotiationSchema);
+if (mongoose.models.Negotiation) {
+  delete mongoose.models.Negotiation;
+}
+
+const Negotiation = mongoose.model<INegotiation>('Negotiation', NegotiationSchema);
 
 export default Negotiation;

@@ -50,9 +50,11 @@ export async function POST(req: NextRequest) {
     const appointment = await Appointment.create({
       user:     user.userId,
       car:      carId,
+      type:     'buy-viewing',
       date:     new Date(date),
       timeSlot,
       notes:    notes || '',
+      message:  notes || '',
       status:   'pending',
     });
 

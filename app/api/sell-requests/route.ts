@@ -36,8 +36,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const { error, user } = await authenticate(req);
-  if (error) return NextResponse.json({ message: error }, { status: 401 });
-
+  
   try {
     await connectDB();
     const body = await req.json();
@@ -53,11 +52,11 @@ export async function POST(req: NextRequest) {
     }
 
     const request = await SellRequest.create({
-      user:         user.userId,
+      user:         user?.userId || undefined,
       make,
       carModel,
       year,
-      price,
+      expectedPrice: price,
       kmDriven:     kmDriven     || 0,
       fuelType:     fuelType     || 'Petrol',
       transmission: transmission || 'Manual',
@@ -70,8 +69,8 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ message: 'Sell request submitted', request }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('POST /api/sell-requests error:', error);
-    return NextResponse.json({ message: 'Server error' }, { status: 500 });
+    return NextResponse.json({ message: error?.message || 'Server error' }, { status: 500 });
   }
 }

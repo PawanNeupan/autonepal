@@ -22,6 +22,17 @@ export function useDeleteReview() {
   });
 }
 
+export function useUpdateReview() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, payload }: { id: string; payload: any }) => {
+      const { data } = await api.put(`/api/reviews/${id}`, payload);
+      return data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['reviews'] }),
+  });
+}
+
 export function useSubmitReview() {
   const queryClient = useQueryClient();
   return useMutation({

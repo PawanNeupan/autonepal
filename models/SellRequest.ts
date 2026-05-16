@@ -1,18 +1,19 @@
 import mongoose, { Schema } from 'mongoose';
 
 export interface ISellRequest {
-  user: mongoose.Types.ObjectId;
+  user?: mongoose.Types.ObjectId;
   make: string;
   carModel: string;
   year: number;
   color: string;
   fuelType: string;
   transmission: string;
-  bodyType: string;
+  bodyType?: string;
   condition: string;
   kmDriven: number;
   engineCC: number;
   description: string;
+  phone?: string;
   overallCondition: number;
   hasAccidentHistory: boolean;
   hasServiceHistory: boolean;
@@ -38,18 +39,19 @@ export interface ISellRequest {
 
 const SellRequestSchema = new Schema<ISellRequest>(
   {
-    user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    user: { type: Schema.Types.ObjectId, ref: 'User' },
     make: { type: String, required: true },
     carModel: { type: String, required: true },
     year: { type: Number, required: true },
-    color: { type: String, required: true },
+    color: { type: String, default: '' },
     fuelType: { type: String, required: true },
     transmission: { type: String, required: true },
-    bodyType: { type: String, required: true },
+    bodyType: { type: String, default: 'Unknown' },
     condition: { type: String, required: true },
     kmDriven: { type: Number, default: 0 },
     engineCC: { type: Number, default: 0 },
     description: { type: String, default: '' },
+    phone: { type: String, default: '' },
     overallCondition: { type: Number, min: 1, max: 5, default: 3 },
     hasAccidentHistory: { type: Boolean, default: false },
     hasServiceHistory: { type: Boolean, default: false },
@@ -96,8 +98,10 @@ const SellRequestSchema = new Schema<ISellRequest>(
   { timestamps: true }
 );
 
-const SellRequest =
-  mongoose.models.SellRequest ||
-  mongoose.model<ISellRequest>('SellRequest', SellRequestSchema);
+if (mongoose.models.SellRequest) {
+  delete mongoose.models.SellRequest;
+}
+
+const SellRequest = mongoose.model<ISellRequest>('SellRequest', SellRequestSchema);
 
 export default SellRequest;

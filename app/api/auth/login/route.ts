@@ -72,10 +72,10 @@ export async function POST(req: NextRequest) {
     });
 
     return response;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Login error:', error);
     return NextResponse.json(
-      { message: 'Something went wrong' },
+      { message: error?.message || 'Something went wrong' },
       { status: 500 }
     );
   }

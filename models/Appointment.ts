@@ -39,12 +39,15 @@ const AppointmentSchema = new Schema<IAppointment>(
       default: 'pending',
     },
     adminNotes: { type: String, default: '' },
+    notes: { type: String, default: '' },
   },
   { timestamps: true }
 );
 
-const Appointment =
-  mongoose.models.Appointment ||
-  mongoose.model<IAppointment>('Appointment', AppointmentSchema);
+if (mongoose.models.Appointment) {
+  delete mongoose.models.Appointment;
+}
+
+const Appointment = mongoose.model<IAppointment>('Appointment', AppointmentSchema);
 
 export default Appointment;

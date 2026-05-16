@@ -17,17 +17,38 @@ export default function Footer() {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [review, setReview] = useState('');
+  const [name, setName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleReviewSubmit = () => {
+  const handleReviewSubmit = async () => {
     if (rating === 0) {
       toast.error('Please select a rating');
       return;
     }
-    // Handle submission logic here (e.g., API call)
-    toast.success('Thank you for your review!');
-    setIsReviewOpen(false);
-    setRating(0);
-    setReview('');
+    
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating, comment: review, name })
+      });
+      
+      if (res.ok) {
+        toast.success('Thank you for your review!');
+        setIsReviewOpen(false);
+        setRating(0);
+        setReview('');
+        setName('');
+      } else {
+        const data = await res.json();
+        toast.error(data.message || 'Failed to submit review');
+      }
+    } catch (error) {
+      toast.error('Something went wrong');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const phone   = contact?.phone        || '+977 01-XXXXXXX';
@@ -274,6 +295,20 @@ export default function Footer() {
             </div>
 
             <div className="space-y-2">
+              <label htmlFor="name" className="text-xs font-medium text-foreground">
+                Your Name (optional)
+              </label>
+              <input
+                id="name"
+                type="text"
+                placeholder="John Doe"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full px-3 py-2 text-sm rounded-md border focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-500 bg-muted/50"
+              />
+            </div>
+
+            <div className="space-y-2">
               <label htmlFor="review" className="text-xs font-medium text-foreground">
                 Share your thoughts (optional)
               </label>
@@ -299,10 +334,11 @@ export default function Footer() {
               </Button>
               <Button 
                 size="sm"
-                onClick={handleReviewSubmit} 
+                onClick={handleReviewSubmit}
+                disabled={isSubmitting}
                 className="bg-red-600 hover:bg-red-700 text-white shadow-sm shadow-red-600/20 px-6"
               >
-                Submit
+                {isSubmitting ? 'Submitting...' : 'Submit'}
               </Button>
             </DialogFooter>
           </div>

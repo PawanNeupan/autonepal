@@ -18,7 +18,7 @@ export const useAuth = () => {
     phone: string,
     password: string
   ) => {
-    const res = await api.post('/auth/register', {
+    const res = await api.post('/api/auth/register', {
       name,
       email,
       phone,
@@ -30,7 +30,7 @@ export const useAuth = () => {
 
   const logoutUser = async () => {
     try {
-      await api.post('/auth/logout');
+      await api.post('/api/auth/logout');
     } finally {
       logout();
       router.push('/');

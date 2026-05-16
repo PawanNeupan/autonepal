@@ -23,3 +23,14 @@ export function useSubmitSellRequest() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sell-requests'] }),
   });
 }
+
+export function useDeleteSellRequest() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.delete(`/api/sell-requests/${id}`);
+      return data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sell-requests'] }),
+  });
+}

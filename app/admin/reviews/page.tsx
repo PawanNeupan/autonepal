@@ -10,7 +10,8 @@ import {
   AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useReviews, useDeleteReview } from '@/hooks/useReviews';
+import { Switch } from '@/components/ui/switch';
+import { useReviews, useDeleteReview, useUpdateReview } from '@/hooks/useReviews';
 import { toast } from 'sonner';
 
 function StarRating({ rating }: { rating: number }) {
@@ -34,7 +35,19 @@ export default function AdminReviewsPage() {
 
   const { data, isLoading }                                 = useReviews(page);
   const { mutateAsync: deleteReview, isPending: deleting }  = useDeleteReview();
+  const { mutate: updateReview }                            = useUpdateReview();
   const reviews                                             = data?.reviews || [];
+
+  const handleToggleFeature = (id: string, currentStatus: boolean) => {
+    updateReview({ id, payload: { isFeatured: !currentStatus } }, {
+      onSuccess: () => {
+        toast.success(currentStatus ? 'Removed from landing page' : 'Added to landing page');
+      },
+      onError: () => {
+        toast.error('Failed to update status');
+      }
+    });
+  };
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -86,7 +99,7 @@ export default function AdminReviewsPage() {
               <Avatar className="w-10 h-10 shrink-0">
                 <AvatarImage src={review.user?.avatar?.url} />
                 <AvatarFallback className="bg-red-600 text-white font-bold text-sm">
-                  {review.user?.name?.charAt(0).toUpperCase()}
+                  {(review.user?.name || review.name || 'A').charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
 
@@ -94,8 +107,8 @@ export default function AdminReviewsPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-3 flex-wrap">
                   <div>
-                    <p className="font-semibold text-foreground text-sm">{review.user?.name}</p>
-                    <p className="text-xs text-muted-foreground">{review.user?.email}</p>
+                    <p className="font-semibold text-foreground text-sm">{review.user?.name || review.name || 'Anonymous'}</p>
+                    <p className="text-xs text-muted-foreground">{review.user?.email || 'Site Review'}</p>
                   </div>
                   <div className="text-right shrink-0">
                     <StarRating rating={review.rating} />
@@ -129,13 +142,26 @@ export default function AdminReviewsPage() {
                 )}
               </div>
 
-              {/* Delete */}
-              <button
-                onClick={() => setDeleteId(review._id)}
-                className="shrink-0 text-muted-foreground hover:text-red-500 transition-colors"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+              {/* Actions */}
+              <div className="shrink-0 flex flex-col items-end justify-between h-full gap-4">
+                <button
+                  onClick={() => setDeleteId(review._id)}
+                  className="text-muted-foreground hover:text-red-500 transition-colors"
+                  title="Delete Review"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+                <div className="flex flex-col items-end gap-1.5">
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
+                    Show on Landing
+                  </span>
+                  <Switch
+                    checked={review.isFeatured}
+                    onCheckedChange={() => handleToggleFeature(review._id, review.isFeatured)}
+                    className="data-[state=checked]:bg-green-500"
+                  />
+                </div>
+              </div>
             </motion.div>
           ))}
         </div>

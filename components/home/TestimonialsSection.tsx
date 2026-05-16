@@ -1,5 +1,7 @@
 import { Marquee } from '@/components/ui/marquee';
 import { Star } from 'lucide-react';
+import { connectDB } from '@/lib/db';
+import Review from '@/models/Review';
 
 const REVIEWS = [
   { name: 'Ramesh Sharma', location: 'Kathmandu', rating: 5, text: 'Found my dream Toyota Fortuner at an unbeatable price. The process was smooth and transparent.' },
@@ -27,7 +29,22 @@ function ReviewCard({ name, location, rating, text }: typeof REVIEWS[0]) {
   );
 }
 
-export default function TestimonialsSection() {
+export default async function TestimonialsSection() {
+  await connectDB();
+  const dbReviews = await Review.find({ isFeatured: true })
+    .populate('user', 'name')
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const featuredReviews = dbReviews.map((r: any) => ({
+    name: r.name || r.user?.name || 'Anonymous',
+    location: 'Nepal',
+    rating: r.rating,
+    text: r.comment || '',
+  }));
+
+  const displayReviews = featuredReviews.length > 0 ? featuredReviews : REVIEWS;
+
   return (
     <section className="py-24 bg-muted/10 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 mb-12 text-center">
@@ -38,16 +55,18 @@ export default function TestimonialsSection() {
       </div>
 
       <Marquee pauseOnHover className="[--duration:40s]">
-        {REVIEWS.map((r, i) => (
-          <ReviewCard key={i} {...r} />
+        {displayReviews.map((r, i) => (
+          <ReviewCard key={`fwd-${i}`} {...r} />
         ))}
       </Marquee>
 
-      <Marquee reverse pauseOnHover className="[--duration:35s] mt-4">
-        {[...REVIEWS].reverse().map((r, i) => (
-          <ReviewCard key={i} {...r} />
-        ))}
-      </Marquee>
+      {displayReviews.length > 2 && (
+        <Marquee reverse pauseOnHover className="[--duration:35s] mt-4">
+          {[...displayReviews].reverse().map((r, i) => (
+            <ReviewCard key={`rev-${i}`} {...r} />
+          ))}
+        </Marquee>
+      )}
     </section>
   );
 }
